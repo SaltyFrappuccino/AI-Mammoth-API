@@ -1,16 +1,12 @@
 {
     "version": 2,
     "builds": [
-      { 
-        "src": "vercel_app.py", 
-        "use": "@vercel/python", 
-        "config": { "runtime": "python3.9", "installCommand": "pip install -r requirements-vercel.txt" } 
-      }
+      { "src": "main.py", "use": "@vercel/python" }
     ],
     "routes": [
-      { "src": "/(.*)", "dest": "/vercel_app.py" }
+      { "src": "/(.*)", "dest": "/main.py" }
     ],
     "env": {
-      "APP_MODULE": "vercel_app:app"
+      "APP_MODULE": "main:app"
     }
   }
