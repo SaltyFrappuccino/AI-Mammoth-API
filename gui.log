@@ -1,0 +1,132 @@
+2025-03-02 19:12:14,361 - gui - INFO - Starting analysis
+2025-03-02 19:12:14,362 - gui - INFO - Parsed semantic DB with 4 entries
+2025-03-02 19:12:14,362 - gui - INFO - Sending request to http://localhost:8080/analyze
+2025-03-02 19:12:47,622 - gui - INFO - Response status: 200
+2025-03-02 19:12:47,623 - gui - INFO - Response headers: {'date': 'Sun, 02 Mar 2025 15:12:15 GMT', 'server': 'uvicorn', 'content-length': '12271', 'content-type': 'application/json'}
+2025-03-02 19:12:47,623 - gui - INFO - Successfully parsed response as JSON
+2025-03-02 19:18:53,706 - gui - INFO - Starting analysis
+2025-03-02 19:18:53,707 - gui - INFO - Parsed semantic DB with 4 entries
+2025-03-02 19:18:53,707 - gui - INFO - Sending request to http://localhost:8080/analyze
+2025-03-02 19:19:25,142 - gui - INFO - Response status: 200
+2025-03-02 19:19:25,143 - gui - INFO - Response headers: {'date': 'Sun, 02 Mar 2025 15:18:55 GMT', 'server': 'uvicorn', 'content-length': '8945', 'content-type': 'application/json'}
+2025-03-02 19:19:25,143 - gui - INFO - Successfully parsed response as JSON
+2025-03-02 19:21:32,172 - gui - INFO - Starting analysis
+2025-03-02 19:21:32,173 - gui - INFO - Parsed semantic DB with 4 entries
+2025-03-02 19:21:32,173 - gui - INFO - Sending request to http://localhost:8080/analyze
+2025-03-02 19:23:26,388 - gui - INFO - Response status: 200
+2025-03-02 19:23:26,389 - gui - INFO - Response headers: {'date': 'Sun, 02 Mar 2025 15:21:33 GMT', 'server': 'uvicorn', 'content-length': '6374', 'content-type': 'application/json'}
+2025-03-02 19:23:26,389 - gui - INFO - Successfully parsed response as JSON
+2025-03-02 19:31:51,915 - gui - INFO - Starting analysis
+2025-03-02 19:31:51,915 - gui - ERROR - Неверный формат JSON для семантической базы: Expecting value: line 1 column 1 (char 0)
+2025-03-02 19:31:58,110 - gui - INFO - Starting analysis
+2025-03-02 19:31:58,110 - gui - INFO - Parsed semantic DB with 5 entries
+2025-03-02 19:31:58,110 - gui - INFO - Sending request to http://localhost:8080/analyze
+2025-03-02 19:32:32,234 - gui - INFO - Response status: 200
+2025-03-02 19:32:32,234 - gui - INFO - Response headers: {'date': 'Sun, 02 Mar 2025 15:31:59 GMT', 'server': 'uvicorn', 'content-length': '473', 'content-type': 'application/json'}
+2025-03-02 19:32:32,235 - gui - INFO - Successfully parsed response as JSON
+2025-03-02 20:10:11,346 - gui - INFO - Starting analysis
+2025-03-02 20:10:11,346 - gui - INFO - Parsed semantic DB with 5 entries
+2025-03-02 20:10:11,346 - gui - INFO - Sending request to http://localhost:8080/analyze
+2025-03-02 20:10:46,535 - gui - INFO - Response status: 200
+2025-03-02 20:10:46,536 - gui - INFO - Response headers: {'date': 'Sun, 02 Mar 2025 16:10:12 GMT', 'server': 'uvicorn', 'content-length': '473', 'content-type': 'application/json'}
+2025-03-02 20:10:46,537 - gui - INFO - Successfully parsed response as JSON
+2025-03-02 20:15:41,291 - gui - INFO - Starting analysis
+2025-03-02 20:15:41,291 - gui - INFO - Parsed semantic DB with 5 entries
+2025-03-02 20:15:41,291 - gui - INFO - Sending request to http://localhost:8080/analyze
+2025-03-02 20:18:36,935 - gui - INFO - Response status: 200
+2025-03-02 20:18:36,936 - gui - INFO - Response headers: {'date': 'Sun, 02 Mar 2025 16:15:42 GMT', 'server': 'uvicorn', 'content-length': '19846', 'content-type': 'application/json'}
+2025-03-02 20:18:36,937 - gui - INFO - Successfully parsed response as JSON
+2025-03-02 20:32:37,824 - gui - INFO - Starting analysis
+2025-03-02 20:32:37,825 - gui - INFO - Parsed semantic DB with 5 entries
+2025-03-02 20:32:37,826 - gui - INFO - Sending request to http://localhost:8080/analyze
+2025-03-02 20:35:06,473 - gui - INFO - Response status: 200
+2025-03-02 20:35:06,473 - gui - INFO - Response headers: {'date': 'Sun, 02 Mar 2025 16:32:38 GMT', 'server': 'uvicorn', 'content-length': '10875', 'content-type': 'application/json'}
+2025-03-02 20:35:06,474 - gui - INFO - Successfully parsed response as JSON
+2025-03-02 20:43:54,782 - gui - INFO - Starting analysis
+2025-03-02 20:43:54,782 - gui - INFO - Parsed semantic DB with 5 entries
+2025-03-02 20:43:54,782 - gui - INFO - Sending request to http://localhost:8080/analyze
+2025-03-02 20:45:49,251 - gui - INFO - Response status: 200
+2025-03-02 20:45:49,251 - gui - INFO - Response headers: {'date': 'Sun, 02 Mar 2025 16:43:55 GMT', 'server': 'uvicorn', 'content-length': '4207', 'content-type': 'application/json'}
+2025-03-02 20:45:49,252 - gui - INFO - Successfully parsed response as JSON
+2025-03-02 20:45:49,254 - gui - ERROR - Server returned error: ValidationError: 2 validation errors for HumanMessage
+content.str
+  Input should be a valid string [type=string_type, input_value={'requirements_analysis':...втрак"]\n}\'\n```'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.10/v/string_type
+content.list[union[str,dict[any,any]]]
+  Input should be a valid list [type=list_type, input_value={'requirements_analysis':...втрак"]\n}\'\n```'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.10/v/list_type
+2025-03-02 20:45:49,255 - gui - ERROR - Server stack trace: Traceback (most recent call last):
+  File "C:\Users\SaltyFrappuccino\repos\nowaythisshitisrealwtf\main.py", line 164, in analyze
+    final_report, bug_estimation, aggregator = perform_analysis(
+  File "C:\Users\SaltyFrappuccino\repos\nowaythisshitisrealwtf\main.py", line 128, in perform_analysis
+    final_report, bug_estimation = aggregator.aggregate(
+  File "C:\Users\SaltyFrappuccino\repos\nowaythisshitisrealwtf\aggregator.py", line 109, in aggregate
+    compliance_result = self.analysis_evaluator_agent.call(
+  File "C:\Users\SaltyFrappuccino\repos\nowaythisshitisrealwtf\agents\analysis_evaluator_agent.py", line 17, in call
+    HumanMessage(content=final_report)
+  File "C:\Users\SaltyFrappuccino\AppData\Local\Programs\Python\Python39\lib\site-packages\langchain_core\messages\human.py", line 57, in __init__
+    super().__init__(content=content, **kwargs)
+  File "C:\Users\SaltyFrappuccino\AppData\Local\Programs\Python\Python39\lib\site-packages\langchain_core\messages\base.py", line 76, in __init__
+    super().__init__(content=content, **kwargs)
+  File "C:\Users\SaltyFrappuccino\AppData\Local\Programs\Python\Python39\lib\site-packages\langchain_core\load\serializable.py", line 125, in __init__
+    super().__init__(*args, **kwargs)
+  File "C:\Users\SaltyFrappuccino\AppData\Local\Programs\Python\Python39\lib\site-packages\pydantic\main.py", line 214, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for HumanMessage
+content.str
+  Input should be a valid string [type=string_type, input_value={'requirements_analysis':...втрак"]\n}\'\n```'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.10/v/string_type
+content.list[union[str,dict[any,any]]]
+  Input should be a valid list [type=list_type, input_value={'requirements_analysis':...втрак"]\n}\'\n```'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.10/v/list_type
+
+2025-03-02 20:51:34,678 - gui - INFO - Starting analysis
+2025-03-02 20:51:34,678 - gui - INFO - Parsed semantic DB with 5 entries
+2025-03-02 20:51:34,678 - gui - INFO - Sending request to http://localhost:8080/analyze
+2025-03-02 20:54:00,789 - gui - INFO - Response status: 200
+2025-03-02 20:54:00,790 - gui - INFO - Response headers: {'date': 'Sun, 02 Mar 2025 16:51:36 GMT', 'server': 'uvicorn', 'content-length': '4143', 'content-type': 'application/json'}
+2025-03-02 20:54:00,791 - gui - INFO - Successfully parsed response as JSON
+2025-03-02 20:54:00,791 - gui - ERROR - Server returned error: ValidationError: 2 validation errors for HumanMessage
+content.str
+  Input should be a valid string [type=string_type, input_value={'requirements_analysis':...ий системы.'}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.10/v/string_type
+content.list[union[str,dict[any,any]]]
+  Input should be a valid list [type=list_type, input_value={'requirements_analysis':...ий системы.'}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.10/v/list_type
+2025-03-02 20:54:00,792 - gui - ERROR - Server stack trace: Traceback (most recent call last):
+  File "C:\Users\SaltyFrappuccino\repos\nowaythisshitisrealwtf\main.py", line 164, in analyze
+    final_report, bug_estimation, aggregator = perform_analysis(
+  File "C:\Users\SaltyFrappuccino\repos\nowaythisshitisrealwtf\main.py", line 128, in perform_analysis
+    final_report, bug_estimation = aggregator.aggregate(
+  File "C:\Users\SaltyFrappuccino\repos\nowaythisshitisrealwtf\aggregator.py", line 121, in aggregate
+    bug_estimation = self.bug_estimator_agent.call(
+  File "C:\Users\SaltyFrappuccino\repos\nowaythisshitisrealwtf\agents\base_agent.py", line 19, in call
+    HumanMessage(content=input_text)
+  File "C:\Users\SaltyFrappuccino\AppData\Local\Programs\Python\Python39\lib\site-packages\langchain_core\messages\human.py", line 57, in __init__
+    super().__init__(content=content, **kwargs)
+  File "C:\Users\SaltyFrappuccino\AppData\Local\Programs\Python\Python39\lib\site-packages\langchain_core\messages\base.py", line 76, in __init__
+    super().__init__(content=content, **kwargs)
+  File "C:\Users\SaltyFrappuccino\AppData\Local\Programs\Python\Python39\lib\site-packages\langchain_core\load\serializable.py", line 125, in __init__
+    super().__init__(*args, **kwargs)
+  File "C:\Users\SaltyFrappuccino\AppData\Local\Programs\Python\Python39\lib\site-packages\pydantic\main.py", line 214, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for HumanMessage
+content.str
+  Input should be a valid string [type=string_type, input_value={'requirements_analysis':...ий системы.'}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.10/v/string_type
+content.list[union[str,dict[any,any]]]
+  Input should be a valid list [type=list_type, input_value={'requirements_analysis':...ий системы.'}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.10/v/list_type
+
+2025-03-02 21:07:30,755 - gui - INFO - Starting analysis
+2025-03-02 21:07:30,756 - gui - INFO - Parsed semantic DB with 5 entries
+2025-03-02 21:07:30,757 - gui - INFO - Sending request to http://localhost:8080/analyze
+2025-03-02 21:10:40,999 - gui - INFO - Response status: 200
+2025-03-02 21:10:41,000 - gui - INFO - Response headers: {'date': 'Sun, 02 Mar 2025 17:07:32 GMT', 'server': 'uvicorn', 'content-length': '25340', 'content-type': 'application/json'}
+2025-03-02 21:10:41,001 - gui - INFO - Successfully parsed response as JSON
+2025-03-02 21:24:02,470 - gui - INFO - Starting analysis
+2025-03-02 21:24:02,472 - gui - INFO - Parsed semantic DB with 5 entries
+2025-03-02 21:24:02,472 - gui - INFO - Sending request to http://localhost:8080/analyze
+2025-03-02 21:26:19,414 - gui - INFO - Response status: 200
+2025-03-02 21:26:19,415 - gui - INFO - Response headers: {'date': 'Sun, 02 Mar 2025 17:24:04 GMT', 'server': 'uvicorn', 'content-length': '34184', 'content-type': 'application/json'}
+2025-03-02 21:26:19,415 - gui - INFO - Successfully parsed response as JSON
