@@ -7,7 +7,6 @@ import sys
 import os
 from datetime import datetime
 from analysis_engine import AnalysisEngine
-from dotenv import load_dotenv
 
 # Настройка минимального логирования только в stdout
 import logging
@@ -33,9 +32,6 @@ app.add_middleware(
     allow_headers=["*"],  # Разрешаем все заголовки
     expose_headers=["Content-Disposition"],  # Позволяет клиентам видеть заголовки для скачивания файлов
 )
-
-# Загружаем переменные окружения для доступа к GigaChat API
-load_dotenv()
 
 # Инициализация анализатора с явной передачей ключа API
 analyzer = AnalysisEngine(

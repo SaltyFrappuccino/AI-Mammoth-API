@@ -1,43 +1,33 @@
 # config.py
 import os
-import getpass
-from dotenv import load_dotenv, find_dotenv
-from langchain_gigachat.embeddings.gigachat import GigaChatEmbeddings
 
-load_dotenv(find_dotenv())
-
-if "AUTH_KEY" not in os.environ:
-    os.environ["AUTH_KEY"] = getpass.getpass("Введите ключ авторизации GigaChat API: ")
-
-if "AUTH_URL" not in os.environ:
-    os.environ["AUTH_URL"] = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
+class Config:
+    """
+    Класс для конфигурации приложения
+    """
     
-if "GIGA_URL" not in os.environ:
-    os.environ["GIGA_URL"] = "https://gigachat.devices.sberbank.ru/api/v1"
+    # GigaChat API
+    GIGACHAT_API_KEY = os.getenv("GIGACHAT_API_KEY", "")
+    GIGACHAT_API_BASE = os.getenv("GIGACHAT_API_BASE", "https://gigachat.devices.sberbank.ru")
+    AUTH_URL = os.getenv("AUTH_URL", "https://ngw.devices.sberbank.ru:9443/api/v2/oauth")
+    GIGA_URL = os.getenv("GIGA_URL", "https://gigachat.devices.sberbank.ru/api/v1")
+    MODEL_TYPE = os.getenv("MODEL_TYPE", "GigaChat-Max")
+    
+    # Настройки сервера
+    PORT = int(os.getenv("PORT", "8080"))
+    
+    # Настройки логирования
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+    
+    # Настройки анализа
+    MAX_TOKENS = int(os.getenv("MAX_TOKENS", "4096"))
+    TEMPERATURE = float(os.getenv("TEMPERATURE", "0.7"))
+    
+    # Настройки безопасности
+    ANALYZE_SECURITY = os.getenv("ANALYZE_SECURITY", "True").lower() in ["true", "1", "yes"]
+    
+    # Пути к файлам
+    REPORTS_DIR = os.getenv("REPORTS_DIR", "output/reports")
+    VISUALIZATIONS_DIR = os.getenv("VISUALIZATIONS_DIR", "output/visualizations")
 
-if "MODEL_TYPE" not in os.environ:
-    os.environ["MODEL_TYPE"] = "GigaChat-Max"  # Default model
-
-AUTH_KEY = os.environ["AUTH_KEY"]
-AUTH_URL = os.environ["AUTH_URL"]
-GIGA_URL = os.environ['GIGA_URL']
-MODEL_TYPE = os.environ["MODEL_TYPE"]  # GigaChat, GigaChat-Pro, or GigaChat-Max
-PORT = int(os.environ.get("PORT", 8080))
-
-from langchain_gigachat.chat_models import GigaChat
-
-llm = GigaChat(
-    credentials=AUTH_KEY,
-    scope="GIGACHAT_API_PERS",
-    model=MODEL_TYPE,
-    verify_ssl_certs=False,
-    auth_url=AUTH_URL,
-    base_url=GIGA_URL,
-    timeout=300,
-)
-
-embeddings = GigaChatEmbeddings(
-    credentials=AUTH_KEY,
-    verify_ssl_certs=False,
-    scope="GIGACHAT_API_PERS"
-)
+config = Config()

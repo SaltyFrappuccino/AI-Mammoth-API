@@ -28,19 +28,32 @@ except ImportError:
 logger = logging.getLogger("aggregator")
 
 class Aggregator:
+    """
+    Класс для агрегации результатов анализа от различных агентов
+    """
+    
     def __init__(self, semantic_db=None, gigachat_client=None):
-        logger.info("Initializing Aggregator")
+        """
+        Инициализация агрегатора
+        
+        Args:
+            semantic_db: Экземпляр SemanticDB для поиска контекста
+            gigachat_client: Экземпляр GigaChatClient
+        """
+        self.semantic_db = semantic_db
         
         # Инициализируем GigaChatClient, если не предоставлен
-        if not gigachat_client:
-            from dotenv import load_dotenv
-            load_dotenv()
+        if gigachat_client is None:
+            from gigachat_client import GigaChatClient
             import os
+            
             auth_key = os.getenv("GIGACHAT_API_KEY", "")
+            if not auth_key:
+                print("WARNING: GIGACHAT_API_KEY не найден в переменных окружения")
+                
             gigachat_client = GigaChatClient(auth_key)
         
-        self.gigachat_client = gigachat_client
-        self.semantic_db = semantic_db
+        self.client = gigachat_client
         
         # Инициализируем агентов
         self.requirements_agent = RequirementsAgent(semantic_db)
@@ -80,7 +93,7 @@ class Aggregator:
             if service_descriptions and not self.semantic_db:
                 logger.info("Service descriptions provided, initializing semantic DB")
                 try:
-                    self.semantic_db = SemanticDB(embeddings=self.gigachat_client, documents=service_descriptions)
+                    self.semantic_db = SemanticDB(embeddings=self.client, documents=service_descriptions)
                     self.requirements_agent = RequirementsAgent(self.semantic_db)
                     self.semantic_agent = SemanticAgent(self.semantic_db)
                     logger.info("Semantic DB initialized successfully")
@@ -219,7 +232,7 @@ class Aggregator:
                 }
                 """
                 
-                response = self.gigachat_client.chat_completion(
+                response = self.client.chat_completion(
                     messages=[{"role": "user", "content": prompt}],
                     response_format={"type": "json_object"}
                 )
@@ -278,7 +291,7 @@ class Aggregator:
                     results["visualizations"] = {}
                 
                 try:
-                    # Анализ рекомендаций из результатов
+                    # Анализ рекомендаций из результатов анализа
                     logger.info("Processing recommendations")
                     
                     # Извлекаем рекомендации из результатов анализа
