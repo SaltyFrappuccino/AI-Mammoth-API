@@ -4,7 +4,15 @@
       { "src": "main.py", "use": "@vercel/python" }
     ],
     "routes": [
-      { "src": "/(.*)", "dest": "/main.py" }
+      { 
+        "src": "/(.*)", 
+        "dest": "/main.py",
+        "headers": {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Accept, Authorization"
+        }
+      }
     ],
     "env": {
       "APP_MODULE": "main:app"
