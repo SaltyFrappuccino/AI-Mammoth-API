@@ -4,12 +4,10 @@ from agents.code_agent import CodeAgent
 from agents.test_cases_agent import TestCasesAgent
 from agents.documentation_agent import DocumentationAgent
 from agents.final_report_agent import FinalReportAgent
-from agents.analysis_evaluator_agent import AnalysisEvaluatorAgent
-from agents.compilance_evaluator import evaluate_code_compliance
-from agents.bug_estimator_agent import BugEstimatorAgent, bug_estimator_schema
+from agents.bug_estimator_agent import BugEstimatorAgent
 from agents.semantic_agent import SemanticAgent
 from semantic_db import SemanticDB
-from langchain_gigachat.embeddings.gigachat import GigaChatEmbeddings
+from gigachat_client import GigaChatClient
 import logging
 import traceback
 import os
@@ -30,15 +28,26 @@ except ImportError:
 logger = logging.getLogger("aggregator")
 
 class Aggregator:
-    def __init__(self, semantic_db=None):
+    def __init__(self, semantic_db=None, gigachat_client=None):
         logger.info("Initializing Aggregator")
+        
+        # Инициализируем GigaChatClient, если не предоставлен
+        if not gigachat_client:
+            from dotenv import load_dotenv
+            load_dotenv()
+            import os
+            auth_key = os.getenv("GIGACHAT_API_KEY", "")
+            gigachat_client = GigaChatClient(auth_key)
+        
+        self.gigachat_client = gigachat_client
         self.semantic_db = semantic_db
+        
+        # Инициализируем агентов
         self.requirements_agent = RequirementsAgent(semantic_db)
         self.code_agent = CodeAgent()
         self.test_cases_agent = TestCasesAgent()
         self.documentation_agent = DocumentationAgent(semantic_db)
         self.final_report_agent = FinalReportAgent()
-        self.analysis_evaluator_agent = AnalysisEvaluatorAgent()
         self.bug_estimator_agent = BugEstimatorAgent()
         
         # Инициализируем расширенные функции, если доступны
@@ -71,14 +80,7 @@ class Aggregator:
             if service_descriptions and not self.semantic_db:
                 logger.info("Service descriptions provided, initializing semantic DB")
                 try:
-                    from langchain_gigachat.embeddings.gigachat import GigaChatEmbeddings
-                    from config import AUTH_KEY
-                    embeddings = GigaChatEmbeddings(
-                        credentials=AUTH_KEY,
-                        verify_ssl_certs=False,
-                        scope="GIGACHAT_API_PERS"
-                    )
-                    self.semantic_db = SemanticDB(embeddings=embeddings, documents=service_descriptions)
+                    self.semantic_db = SemanticDB(embeddings=self.gigachat_client, documents=service_descriptions)
                     self.requirements_agent = RequirementsAgent(self.semantic_db)
                     self.semantic_agent = SemanticAgent(self.semantic_db)
                     logger.info("Semantic DB initialized successfully")
@@ -139,7 +141,7 @@ class Aggregator:
             # Анализ требований
             logger.info("Calling RequirementsAgent")
             try:
-                req_analysis = self.requirements_agent.call(requirements_text)
+                req_analysis = self.requirements_agent.analyze_requirements(requirements_text)
                 results["requirements_analysis"] = req_analysis
                 logger.info("RequirementsAgent completed successfully")
             except Exception as e:
@@ -151,7 +153,7 @@ class Aggregator:
             # Анализ кода
             logger.info("Calling CodeAgent")
             try:
-                code_analysis = self.code_agent.call(code_text)
+                code_analysis = self.code_agent.analyze_code(code_text)
                 results["code_analysis"] = code_analysis
                 logger.info("CodeAgent completed successfully")
             except Exception as e:
@@ -162,7 +164,7 @@ class Aggregator:
             # Анализ тест-кейсов
             logger.info("Calling TestCasesAgent")
             try:
-                test_cases_analysis = self.test_cases_agent.call(test_cases_text)
+                test_cases_analysis = self.test_cases_agent.analyze_test_cases(test_cases_text, requirements_text)
                 results["test_cases_analysis"] = test_cases_analysis
                 logger.info("TestCasesAgent completed successfully")
             except Exception as e:
@@ -174,7 +176,7 @@ class Aggregator:
             if documentation_text and documentation_text.strip():
                 logger.info("Calling DocumentationAgent")
                 try:
-                    doc_analysis = self.documentation_agent.call(documentation_text)
+                    doc_analysis = self.documentation_agent.analyze_documentation(documentation_text, requirements=requirements_text, code=code_text)
                     results["documentation_analysis"] = doc_analysis
                     logger.info("DocumentationAgent completed successfully")
                 except Exception as e:
@@ -187,11 +189,44 @@ class Aggregator:
             # Оценка соответствия кода требованиям
             logger.info("Evaluating compliance")
             try:
-                compliance_result = evaluate_code_compliance(
-                    requirements_analysis=results.get("requirements_analysis", ""),
-                    test_cases_analysis=results.get("test_cases_analysis", ""),
-                    code_analysis=results.get("code_analysis", "")
+                # Генерируем данные о соответствии кода требованиям через запрос к GigaChat
+                prompt = f"""
+                Проанализируй соответствие кода требованиям и тестам на основе следующих данных:
+                
+                ## Анализ требований
+                {results.get("requirements_analysis", "")[:2000]}
+                
+                ## Анализ кода
+                {results.get("code_analysis", "")[:2000]}
+                
+                ## Анализ тестов
+                {results.get("test_cases_analysis", "")[:2000]}
+                
+                Определи и верни следующие метрики:
+                1. Процент соответствия кода требованиям (от 0 до 100)
+                2. Процент соответствия тестов требованиям (от 0 до 100)
+                3. Процент соответствия кода тестам (от 0 до 100)
+                4. Подробное объяснение каждой метрики
+                
+                Верни результат в следующем формате:
+                {
+                  "code_to_requirements_percentage": X,
+                  "tests_to_requirements_percentage": Y,
+                  "code_to_tests_percentage": Z,
+                  "code_to_requirements_explanation": "Подробное объяснение...",
+                  "tests_to_requirements_explanation": "Подробное объяснение...",
+                  "code_to_tests_explanation": "Подробное объяснение..."
+                }
+                """
+                
+                response = self.gigachat_client.chat_completion(
+                    messages=[{"role": "user", "content": prompt}],
+                    response_format={"type": "json_object"}
                 )
+                
+                result_text = response["choices"][0]["message"]["content"]
+                compliance_result = json.loads(result_text)
+                
                 results["compliance_result"] = compliance_result
                 logger.info("Compliance evaluation completed successfully")
             except Exception as e:
@@ -304,7 +339,7 @@ class Aggregator:
                     visualization_data = results["visualizations"]
                 
                 # Генерируем отчет с учетом новых данных
-                final_report = self.final_report_agent.call(results)
+                final_report = self.final_report_agent.generate_report(results)
                 
                 # Если у нас есть визуализации, но они не были включены, добавляем их в отчет сейчас
                 if ENHANCED_FEATURES_AVAILABLE and visualization_data:

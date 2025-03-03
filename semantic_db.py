@@ -1,21 +1,39 @@
 from langchain_chroma import Chroma
-from langchain_gigachat.embeddings.gigachat import GigaChatEmbeddings
 from chromadb.config import Settings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 import logging
 import traceback
+import numpy as np
 
 logger = logging.getLogger("semantic_db")
 
 class SemanticDB:
+    """
+    Класс для работы с семантической базой данных.
+    Позволяет хранить и искать документы по семантической близости.
+    """
     def __init__(self, embeddings, documents=None):
+        """
+        Инициализирует семантическую базу данных.
+        
+        Args:
+            embeddings: Экземпляр GigaChatClient для создания эмбеддингов
+            documents: Словарь {название_сервиса: описание} или список документов
+        """
         logger.info("Initializing SemanticDB")
-        self.embeddings = embeddings
+        self.embeddings_client = embeddings
         
         try:
+            # Создаем адаптер для эмбеддингов, который использует GigaChatClient
+            # Это нужно для совместимости с Chroma DB
+            self.embeddings = {
+                "embed_documents": self._embed_documents,
+                "embed_query": self._embed_query
+            }
+            
             self.db = Chroma(
-                embedding_function=embeddings,
+                embedding_function=self.embeddings,
                 client_settings=Settings(anonymized_telemetry=False))
             
             # Check what type of data we received
@@ -43,8 +61,53 @@ class SemanticDB:
             logger.error(traceback.format_exc())
             raise RuntimeError(f"Failed to initialize SemanticDB: {str(e)}")
     
+    def _embed_documents(self, texts):
+        """
+        Создает эмбеддинги для списка текстов с помощью GigaChat API.
+        
+        Args:
+            texts: Список текстов для создания эмбеддингов
+            
+        Returns:
+            list: Список векторов эмбеддингов
+        """
+        try:
+            embeddings = []
+            for text in texts:
+                embedding = self.embeddings_client.get_embeddings(text)
+                embeddings.append(embedding)
+            return embeddings
+        except Exception as e:
+            logger.error(f"Error creating embeddings for documents: {str(e)}")
+            logger.error(traceback.format_exc())
+            # Возвращаем вектор нулей в случае ошибки
+            return [np.zeros(1024).tolist() for _ in range(len(texts))]
+    
+    def _embed_query(self, text):
+        """
+        Создает эмбеддинг для текста запроса с помощью GigaChat API.
+        
+        Args:
+            text: Текст запроса
+            
+        Returns:
+            list: Вектор эмбеддинга
+        """
+        try:
+            return self.embeddings_client.get_embeddings(text)
+        except Exception as e:
+            logger.error(f"Error creating embedding for query: {str(e)}")
+            logger.error(traceback.format_exc())
+            # Возвращаем вектор нулей в случае ошибки
+            return np.zeros(1024).tolist()
+    
     def add_documents(self, documents):
-        """Add a list of text documents to the database"""
+        """
+        Добавляет список текстовых документов в базу данных.
+        
+        Args:
+            documents: Список текстов для добавления в базу
+        """
         logger.info(f"Adding {len(documents)} documents to the database")
         try:
             # Check if documents are all strings
@@ -62,8 +125,10 @@ class SemanticDB:
     
     def add_service_descriptions(self, service_descriptions):
         """
-        Process a dictionary of service descriptions in the format:
-        { "serviceName": "serviceDescription", ... }
+        Обрабатывает словарь с описаниями сервисов и добавляет их в базу данных.
+        
+        Args:
+            service_descriptions: Словарь в формате { "serviceName": "serviceDescription", ... }
         """
         logger.info(f"Adding service descriptions for {len(service_descriptions)} services")
         try:
@@ -108,6 +173,16 @@ class SemanticDB:
             raise RuntimeError(f"Failed to add service descriptions to database: {str(e)}")
     
     def search(self, query: str, k: int = 3) -> list:
+        """
+        Ищет документы, семантически похожие на запрос.
+        
+        Args:
+            query: Текст запроса
+            k: Количество результатов
+            
+        Returns:
+            list: Список найденных документов
+        """
         logger.info(f"Searching for: '{query}' with k={k}")
         try:
             docs = self.db.similarity_search(query, k=k)
@@ -119,7 +194,15 @@ class SemanticDB:
             return [f"Error during search: {str(e)}"]
     
     def query_service(self, service_name: str) -> str:
-        """Get information about a specific service by name"""
+        """
+        Получает информацию о конкретном сервисе по его названию.
+        
+        Args:
+            service_name: Название сервиса
+            
+        Returns:
+            str: Информация о сервисе
+        """
         logger.info(f"Querying service: {service_name}")
         try:
             docs = self.db.similarity_search(

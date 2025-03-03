@@ -1,9 +1,14 @@
 # agents/bug_estimator_agent.py
+import logging
+import re
+from typing import Dict, Any, List
 from agents.base_agent import BaseAgent
-from langchain_core.messages import HumanMessage, SystemMessage
-from config import llm
 
 class BugEstimatorAgent(BaseAgent):
+    """
+    Агент для анализа потенциальных ошибок в исходном коде на основе требований 
+    и результатов анализа кода.
+    """
     def __init__(self):
         system_prompt = """
         Ты эксперт по анализу качества кода и выявлению потенциальных багов в веб-API, со специализацией 
@@ -55,8 +60,19 @@ class BugEstimatorAgent(BaseAgent):
         ```
         """
         super().__init__("BugEstimatorAgent", system_prompt)
+        logging.info("BugEstimatorAgent initialized")
         
-    def estimate_bugs(self, requirements: str, code_analysis: str) -> dict:
+    def estimate_bugs(self, requirements: str, code_analysis: str) -> Dict[str, Any]:
+        """
+        Анализирует соответствие кода требованиям и выявляет потенциальные ошибки.
+        
+        Args:
+            requirements: Текст требований к системе
+            code_analysis: Результаты анализа кода
+            
+        Returns:
+            Dict[str, Any]: Результаты оценки ошибок, включая их количество и детали
+        """
         analysis_text = f"""
         ## Требования:
         
@@ -76,23 +92,17 @@ class BugEstimatorAgent(BaseAgent):
         Если код полностью соответствует требованиям, укажи 0 багов.
         """
         
-        messages = [
-            SystemMessage(content=self.system_prompt),
-            HumanMessage(content=analysis_text)
-        ]
-        
-        response = llm.invoke(messages)
-        response_content = response.content.strip()
-        
-        # Разбор ответа
         try:
-            lines = response_content.split('\n')
+            response = self.call(analysis_text)
+            
+            # Разбор ответа
+            lines = response.split('\n')
             count_line = next((line for line in lines if line.lower().startswith('количество багов:')), '')
             bug_count = int(count_line.split(':')[1].strip()) if count_line else 0
             
             # Извлечение объяснений
-            explanations_start = response_content.find('Объяснения:')
-            explanations = response_content[explanations_start:] if explanations_start != -1 else ""
+            explanations_start = response.find('Объяснения:')
+            explanations = response[explanations_start:] if explanations_start != -1 else ""
             
             return {
                 "bug_count": bug_count,
@@ -100,15 +110,22 @@ class BugEstimatorAgent(BaseAgent):
                 "detailed_bugs": self.parse_detailed_bugs(explanations)
             }
         except Exception as e:
+            logging.error(f"Error in BugEstimatorAgent.estimate_bugs: {e}")
             return {
                 "bug_count": 0,
                 "explanations": f"Не удалось определить баги: {str(e)}",
                 "detailed_bugs": []
             }
     
-    def parse_detailed_bugs(self, explanations_text: str) -> list:
+    def parse_detailed_bugs(self, explanations_text: str) -> List[Dict[str, str]]:
         """
         Парсит структурированный текст с объяснениями багов и возвращает список словарей с детальной информацией
+        
+        Args:
+            explanations_text: Текст с объяснениями ошибок
+            
+        Returns:
+            List[Dict[str, str]]: Список словарей с информацией о каждой ошибке
         """
         detailed_bugs = []
         
@@ -123,7 +140,6 @@ class BugEstimatorAgent(BaseAgent):
             return []
             
         # Разбиваем на отдельные баги (предполагаем, что каждый начинается с цифры и точки)
-        import re
         bug_sections = re.split(r'\n\s*\d+\.\s+', content)
         
         # Первый элемент может быть пустым, если текст начинается с номера
@@ -145,6 +161,102 @@ class BugEstimatorAgent(BaseAgent):
                 detailed_bugs.append(bug_info)
                 
         return detailed_bugs
+    
+    def estimate_bugs_structured(self, requirements: str, code_analysis: str) -> Dict[str, Any]:
+        """
+        Анализирует соответствие кода требованиям и выявляет потенциальные ошибки, 
+        возвращая структурированный результат.
+        
+        Args:
+            requirements: Текст требований к системе
+            code_analysis: Результаты анализа кода
+            
+        Returns:
+            Dict[str, Any]: Структурированные результаты оценки ошибок
+        """
+        analysis_text = f"""
+        ## Требования:
+        
+        {requirements}
+        
+        ## Анализ кода:
+        
+        {code_analysis}
+        
+        Проанализируй соответствие кода требованиям и выяви потенциальные баги.
+        Помни: 
+        1. Баг - это конкретное несоответствие кода функциональным требованиям
+        2. Если API реализует нужные эндпоинты для задач и использует JWT, это соответствует требованиям
+        3. REST API не требует наличия фронтенд-кода для полноты реализации
+        4. Теоретические проблемы, которые могут возникнуть при расширении, НЕ являются багами
+        
+        Если код полностью соответствует требованиям, укажи 0 багов.
+        """
+        
+        try:
+            response = self.call_with_functions(analysis_text, [
+                {
+                    "name": "bug_estimation_result",
+                    "description": "Результат оценки потенциальных ошибок",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "bug_count": {
+                                "type": "integer",
+                                "description": "Количество обнаруженных ошибок"
+                            },
+                            "bugs": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Краткое описание бага"
+                                        },
+                                        "cause": {
+                                            "type": "string",
+                                            "description": "Техническая причина возникновения"
+                                        },
+                                        "severity": {
+                                            "type": "string",
+                                            "enum": ["Критическая", "Высокая", "Средняя", "Низкая"],
+                                            "description": "Серьезность бага"
+                                        },
+                                        "location": {
+                                            "type": "string",
+                                            "description": "Конкретное место в коде"
+                                        },
+                                        "impact": {
+                                            "type": "string",
+                                            "description": "Как влияет на работу системы"
+                                        },
+                                        "recommendations": {
+                                            "type": "string",
+                                            "description": "Детальные шаги по исправлению"
+                                        }
+                                    },
+                                    "required": ["description", "severity", "impact", "recommendations"]
+                                }
+                            },
+                            "summary": {
+                                "type": "string",
+                                "description": "Общее заключение о соответствии кода требованиям"
+                            }
+                        },
+                        "required": ["bug_count", "summary"]
+                    }
+                }
+            ])
+            return response
+        except Exception as e:
+            logging.error(f"Error in BugEstimatorAgent.estimate_bugs_structured: {e}")
+            return {
+                "bug_count": 0,
+                "bugs": [],
+                "summary": f"Не удалось выполнить анализ из-за ошибки: {str(e)}",
+                "error": str(e)
+            }
 
 bug_estimator_schema = {
     "name": "estimate_potential_bugs",

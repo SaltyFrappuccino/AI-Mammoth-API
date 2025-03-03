@@ -1,11 +1,17 @@
 # agents/final_report_agent.py
-from langchain_core.messages import HumanMessage, SystemMessage
-from config import llm
+import json
+import os
+import logging
+from typing import Dict, Any
+from agents.base_agent import BaseAgent
 
-
-class FinalReportAgent:
+class FinalReportAgent(BaseAgent):
+    """
+    Агент для создания итогового отчета на основе анализа всех других агентов.
+    Объединяет результаты и создает структурированный отчет о соответствии кода требованиям.
+    """
     def __init__(self):
-        self.system_prompt = """
+        system_prompt = """
         Ты эксперт-аналитик по оценке качества программного обеспечения с глубоким пониманием веб-приложений,
         REST API и современных архитектур бэкенд-систем. Твоя задача - провести детальный объективный 
         анализ соответствия кода требованиям на основе предоставленных данных.
@@ -167,19 +173,84 @@ class FinalReportAgent:
         6. Будь максимально детальным в анализе метрик соответствия и объяснениях численных показателей.
         7. Уделяй особое внимание выявленным багам и несоответствиям, предоставляя конкретные шаги по их устранению.
         """
+        super().__init__("FinalReportAgent", system_prompt)
+        logging.info("FinalReportAgent initialized")
 
-    def call(self, agent_data: dict) -> str:
+    def generate_summary(self, code_to_requirements: float, tests_to_requirements: float, 
+                         code_to_tests: float, bug_count: int) -> str:
+        """
+        Генерирует краткую сводку о состоянии проекта на основе метрик соответствия.
+        
+        Args:
+            code_to_requirements: Процент соответствия кода требованиям
+            tests_to_requirements: Процент соответствия тестов требованиям
+            code_to_tests: Процент соответствия кода тестам
+            bug_count: Количество обнаруженных багов
+            
+        Returns:
+            str: Сводка о состоянии проекта
+        """
+        prompt = f"""
+        На основе следующих метрик соответствия предоставь краткую сводку о состоянии проекта (не более 3 абзацев):
+        
+        - Соответствие кода требованиям: {code_to_requirements}%
+        - Соответствие тестов требованиям: {tests_to_requirements}%
+        - Соответствие кода тестам: {code_to_tests}%
+        - Количество багов: {bug_count}
+        """
+        
+        try:
+            response = self.call(prompt)
+            return response.strip()
+        except Exception as e:
+            logging.error(f"Error generating summary: {e}")
+            return f"Не удалось создать сводку о состоянии проекта: {str(e)}"
+    
+    def generate_conclusion(self, code_to_requirements: float, tests_to_requirements: float, 
+                           code_to_tests: float, bug_count: int) -> str:
+        """
+        Генерирует заключение на основе метрик соответствия.
+        
+        Args:
+            code_to_requirements: Процент соответствия кода требованиям
+            tests_to_requirements: Процент соответствия тестов требованиям
+            code_to_tests: Процент соответствия кода тестам
+            bug_count: Количество обнаруженных багов
+            
+        Returns:
+            str: Заключение о проекте
+        """
+        prompt = f"""
+        На основе следующих метрик:
+        - Соответствие кода требованиям: {code_to_requirements}%
+        - Соответствие тестов требованиям: {tests_to_requirements}%
+        - Соответствие кода тестам: {code_to_tests}%
+        - Количество багов: {bug_count}
+        
+        Создай краткое заключение (не более 3 абзацев), содержащее:
+        1. Итоговую оценку соответствия требованиям
+        2. Общее резюме о качестве кода и потенциальных рисках
+        3. Рекомендации по дальнейшему развитию проекта
+        """
+        
+        try:
+            response = self.call(prompt)
+            return response.strip()
+        except Exception as e:
+            logging.error(f"Error generating conclusion: {e}")
+            return f"Не удалось создать заключение: {str(e)}"
+
+    def generate_report(self, agent_data: Dict[str, Any]) -> str:
         """
         Создает итоговый отчет, комбинируя прямое использование структурированных данных из agent_data
-        с генерацией текста через LLM для более аналитических частей.
-        """
-        # Импортируем llm для использования в генерации частей отчета
-        from config import llm
-        from langchain_core.messages import HumanMessage, SystemMessage
-        import json
-        import os
-        import logging
+        с генерацией текста для аналитических частей.
         
+        Args:
+            agent_data: Словарь с результатами анализа от других агентов
+            
+        Returns:
+            str: Итоговый отчет
+        """
         logger = logging.getLogger("final_report_agent")
         
         try:
@@ -209,24 +280,11 @@ class FinalReportAgent:
             bug_explanations = bug_estimation.get('explanations', '')
             detailed_bugs = bug_estimation.get('detailed_bugs', [])
             
-            # ЧАСТЬ 1: Сводка соответствия - генерируем через LLM
-            svodka_prompt = f"""
-            На основе следующих метрик соответствия предоставь краткую сводку о состоянии проекта (не более 3 абзацев):
-            
-            - Соответствие кода требованиям: {code_to_requirements}%
-            - Соответствие тестов требованиям: {tests_to_requirements}%
-            - Соответствие кода тестам: {code_to_tests}%
-            - Количество багов: {bug_count}
-            """
-            
-            messages = [
-                SystemMessage(content="Ты эксперт-аналитик. Создай краткую объективную сводку на основе метрик."),
-                HumanMessage(content=svodka_prompt)
-            ]
-            
-            svodka_response = llm.invoke(messages)
-            
-            final_report += f"## Сводка соответствия\n\n{svodka_response.content.strip()}\n\n"
+            # ЧАСТЬ 1: Сводка соответствия
+            svodka_content = self.generate_summary(
+                code_to_requirements, tests_to_requirements, code_to_tests, bug_count
+            )
+            final_report += f"## Сводка соответствия\n\n{svodka_content}\n\n"
             
             # ЧАСТЬ 2: Метрики соответствия - добавляем напрямую из данных
             final_report += "### Метрики соответствия\n\n"
@@ -302,29 +360,12 @@ class FinalReportAgent:
                     if 'рекомендации' in bug:
                         final_report += f"**Рекомендации по исправлению**: {bug.get('рекомендации', '')}\n\n"
             
-            # ЧАСТЬ 8: Заключение - генерируем через LLM с учетом всех предыдущих данных
-            conclusion_prompt = f"""
-            На основе следующих метрик:
-            - Соответствие кода требованиям: {code_to_requirements}%
-            - Соответствие тестов требованиям: {tests_to_requirements}%
-            - Соответствие кода тестам: {code_to_tests}%
-            - Количество багов: {bug_count}
-            
-            Создай краткое заключение (не более 3 абзацев), содержащее:
-            1. Итоговую оценку соответствия требованиям
-            2. Общее резюме о качестве кода и потенциальных рисках
-            3. Рекомендации по дальнейшему развитию проекта
-            """
-            
-            messages = [
-                SystemMessage(content="Ты эксперт-аналитик. Создай краткое объективное заключение на основе метрик."),
-                HumanMessage(content=conclusion_prompt)
-            ]
-            
-            conclusion_response = llm.invoke(messages)
-            
+            # ЧАСТЬ 8: Заключение
+            conclusion_content = self.generate_conclusion(
+                code_to_requirements, tests_to_requirements, code_to_tests, bug_count
+            )
             final_report += "## Заключение\n\n"
-            final_report += conclusion_response.content.strip() + "\n\n"
+            final_report += conclusion_content + "\n\n"
             
             # Дополнительно сохраняем структурированные данные
             try:
@@ -360,10 +401,10 @@ class FinalReportAgent:
             
             ### Доступные данные:
             
-            - Требования: {"Есть данные" if requirements_analysis else "Нет данных"}
-            - Код: {"Есть данные" if code_analysis else "Нет данных"}
-            - Тесты: {"Есть данные" if test_cases_analysis else "Нет данных"}
-            - Документация: {"Есть данные" if documentation_analysis else "Нет данных"}
-            - Метрики соответствия: {"Есть данные" if compliance_result else "Нет данных"}
-            - Оценка багов: {"Есть данные" if bug_estimation else "Нет данных"}
+            - Требования: {"Есть данные" if agent_data.get("requirements_analysis") else "Нет данных"}
+            - Код: {"Есть данные" if agent_data.get("code_analysis") else "Нет данных"}
+            - Тесты: {"Есть данные" if agent_data.get("test_cases_analysis") else "Нет данных"}
+            - Документация: {"Есть данные" if agent_data.get("documentation_analysis") else "Нет данных"}
+            - Метрики соответствия: {"Есть данные" if agent_data.get("compliance_result") else "Нет данных"}
+            - Оценка багов: {"Есть данные" if agent_data.get("bug_estimation") else "Нет данных"}
             """
